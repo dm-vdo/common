@@ -384,7 +384,8 @@ sub main {
        ($machine eq 's390x') ? () : \&checkKDumpConfig,
        ($machine eq 's390x') ? () : \&checkKExecLoaded,
        \&checkClocksource,
-       \&checkLVM,
+       \&checkDeviceStack,
+       \&checkLVMDevicesFile,
        \&checkLVMConf,
        \&checkModules,
        \&checkPythonHacks,
@@ -2042,9 +2043,9 @@ sub checkKernLog {
 }
 
 ######################################################################
-# Check that the machine has no logical volumes set up.
+# Check that the machine has no block devices we don't expect to see.
 ##
-sub checkLVM {
+sub checkDeviceStack {
   # Start by checking to make sure we can run vgscan and that it isn't in a
   # state that would cause things to hang.
   my $timeout = 30;
@@ -2066,17 +2067,48 @@ sub checkLVM {
   # configuration.
   my $vgPattern = _generateScratchVGPattern();
 
+  # List of known base storage device names on PMI Farms
+  my @deviceNames = getTestBlockDeviceNames();
+
+  # To start, check for any pv/vg pairs that have no lvs in them.
+  # This should only ever happen on the very top device in the stack
+  # that failed between creating a volume group and creating its lv.
+  open(my $fh, "sudo pvs --noheadings -o pv_name,vg_name 2>/dev/null |")
+    || _die("couldn't run pvs; OS_ERROR = \"$OS_ERROR\"");
+  @outputLines = <$fh>;
+  close($fh) || _die("couldn't run pvs; $CHILD_ERROR");
+  my %physicalVolumes = map {
+    my @words = split(" ", $_);
+    $words[0] => ($words[1] // "")
+  } @outputLines;
+  my @pvs = keys(%physicalVolumes);
+
+  @pvs = grep { $physicalVolumes{$_} !~ /^($vgPattern)$/ } @pvs;
+
+  foreach my $pv (@pvs) {
+    my $vg = $physicalVolumes{$pv};
+    my $lv_count = `sudo vgs -o lv_count --noheadings $vg`;
+    if ($lv_count == 0) {
+      my $removeCmd = "sudo vgs $vg && sudo vgremove --force $vg;\n"
+        . "sudo pvs $pv && sudo pvremove --force $pv && vgscan";
+      error("Found empty vg $vg in pv $pv", $removeCmd);
+    }
+  }
+
   # Get the tree of block devices with name and type, forced to ASCII
-  # representation.
-  open(my $fh, "env LANG=C lsblk -noheadings -o NAME,TYPE |")
+  # representation. Use paths so we can use them for lvmdevices stuff
+  # if its supported. Use ascii so its clearer what characters we should
+  # match on.
+  open($fh, "env LANG=C lsblk --paths --ascii --noheadings -o NAME,TYPE |")
     || _die("couldn't run lsblk; OS_ERROR = \"$OS_ERROR\"");
 
   my @volumes = ();
   foreach my $line (<$fh>) {
     chomp $line;
-    if ($line =~ /^\s*([`|-]-)*(?<name>([\w.-])+)\s+(?<type>\w+)$/) {
-      my $device = {name => $+{name}, type => $+{type}};
+    if ($line =~ /^\s*([`|-]-)*(?<path>([^\/]*\/)+(?<name>([\w.-])+))\s+(?<type>\w+)$/) {
+      my $device = {path => $+{path}, name => $+{name}, type => $+{type}};
       if ($device->{name} !~ /$vgPattern/) {
+        # Important for device ordering
         unshift(@volumes, $device);
       } else {
         $log->debug("Scratch device '$device->{name}' ignored");
@@ -2087,52 +2119,37 @@ sub checkLVM {
   close($fh) || _die("couldn't run lsblk; $CHILD_ERROR");
 
   foreach my $volume (@volumes) {
-    if ($volume->{type} eq "lvm") {
-      my $split = `dmsetup splitname --noheadings $volume->{name}`;
+    my $name = $volume->{name};
+    my $type = $volume->{type};
+    my $path = $volume->{path};
+    if ($type eq "lvm") {
+      my $split = `dmsetup splitname --noheadings $name`;
       my ($vg,$lv) = split(/:/, $split);
       # Remove the lv, and if it's the last lv, remove the vg too
       my $lvremove = "sudo lvremove --force $vg/$lv;\n"
         . "lv_count=`sudo vgs -o lv_count --noheadings $vg`;\n"
-          . "[ \"\$lv_count\" != 0 ] || sudo vgremove --force $vg";
+        . "[ \$lv_count -gt 0 ] || sudo vgremove --force $vg";
       error("Found LVM logical volume $lv", $lvremove);
-    } elsif ($volume->{type} eq "dm" or $volume->{type} eq "vdo") {
-      my $name = $volume->{name};
-      error("Found device mapper target $name",
-            "sudo dmsetup remove $name || sudo dmsetup remove --force $name");
+      removeFromLVMDevicesFile($path);
+    } elsif ($type eq "dm" or $type eq "vdo") {
+      my $dmremove = "sudo dmsetup remove $name || sudo dmsetup remove --force $name";
+      error("Found device mapper target $name", $dmremove);
+      removeFromLVMDevicesFile($path);
+    } elsif ($type =~ /raid/ && _isPMIFarm()) {
+      my $raidremove = "sudo mdadm --stop $path;\n"
+        . "sudo mdadm --zero-superblock " . join(" ", @deviceNames);
+      error("Found raid device $name", $raidremove);
+      removeFromLVMDevicesFile($path);
     }
   }
 
-  # Get a list of volume groups for removal in case any are left after
-  # the initial pass of lvm fixes.
-  open($fh, "sudo vgs --noheadings -o vg_name 2>/dev/null |")
-    || _die("couldn't run vgs; OS_ERROR = \"$OS_ERROR\"");
-  @outputLines = <$fh>;
-  close($fh) || _die("couldn't run vgs; $CHILD_ERROR");
-  map { chomp; s/^\s*|\s*$//g; } @outputLines;
-  @outputLines = grep(!/^($vgPattern)/, @outputLines);
-  foreach my $vg (@outputLines) {
-    error("found LVM volume group $vg",
-          "sudo vgs $vg && sudo vgremove --force $vg");
-  }
-
-  # Get a list of physical volumes for removal in case any are left
-  # after the initial pass of lvm fixes.
-  open($fh, "sudo pvs --noheadings -o pv_name,vg_name 2>/dev/null |")
-    || _die("couldn't run pvs; OS_ERROR = \"$OS_ERROR\"");
-  @outputLines = <$fh>;
-  close($fh) || _die("couldn't run pvs; $CHILD_ERROR");
-  my %physicalVolumes = map {
-    my @words = split(" ", $_);
-    $words[0] => ($words[1] // "")
-  } @outputLines;
-  @volumes = keys(%physicalVolumes);
-
-  # Remove any devices associated with standard volume groups.
-  @volumes = grep { $physicalVolumes{$_} !~ /^($vgPattern)$/ } @volumes;
-
-  if (@volumes) {
-    error("found LVM physical volumes @volumes",
-          "sudo pvremove -f @volumes && vgscan");
+  # In case any are left after the initial pass, try to remove all
+  # pvs/vgs again.
+  foreach my $pv (@pvs) {
+    my $vg = $physicalVolumes{$pv};
+    error("found LVM physical volume $pv",
+          "sudo vgs $vg && sudo vgremove --force $vg;\n"
+          . "sudo pvs $pv && sudo pvremove --force $pv && sudo vgscan");
   }
 
   # Check for warnings of orphaned physical volumes since their existence
@@ -2146,6 +2163,59 @@ sub checkLVM {
   if (@outputLines) {
     error("found orphaned physical volume",
           "sudo pvscan --cache");
+  }
+
+  # Last resort. Hit it with the sledgehammer
+  if (_isPMIFarm()) {
+    foreach my $raidDisk (@deviceNames) {
+      my $hasFS = `wipefs -n $raidDisk`;
+      if ($hasFS ne "") {
+        my $wipeCmd = "wipefs --all --force $raidDisk;\n"
+          . "dd if=/dev/zero of=$raidDisk bs=1M count=2000";
+        error("$raidDisk is not clean", $wipeCmd);
+      }
+    }
+  }
+}
+
+######################################################################
+# Remove device from lvm devices file (if it exists).
+##
+sub removeFromLVMDevicesFile {
+  my ($path) = @_;
+  # check whether lvmdevices is set up or not
+  my $status = `sudo lvmdevices 2>&1`;
+  if ($status =~ m/Devices file not enabled/m) {
+    return;
+  }
+  push(@fixes, "sudo lvmdevices --deldev $path");
+}
+
+######################################################################
+# Clean up orphaned devices in lvm devices file (if it exists).
+##
+sub checkLVMDevicesFile {
+  # check whether lvmdevices is set up or not
+  my $status = `sudo lvmdevices 2>&1`;
+  if ($status =~ m/Devices file not enabled/m) {
+    return;
+  }
+
+  my @devices;
+  open(my $fh, "sudo lvmdevices --check |")
+    || _die("couldn't run lvmdevices; OS_ERROR = \"$OS_ERROR\"");
+  foreach my $line (<$fh>) {
+    chomp $line;
+    if ($line =~ m/.*DEVNAME=([^\s]*).*/m) {
+      push(@devices, $1);
+    }
+  }
+
+  close($fh) || _die("couldn't run lvmdevices; $CHILD_ERROR");
+
+  foreach my $device (@devices) {
+    error("found orphaned device $device in LVM devices file",
+          "sudo lvmdevices --yes --deldev $device");
   }
 }
 
@@ -2536,38 +2606,59 @@ sub checkISCSIInitiator {
 
 ########################################################################
 # Make sure we can identify the test storage device on this machine.
-#
-# N.B.: Make sure this stays in sync with the code in
-# Permabit::LabUtils::getTestBlockDeviceNames!
 ##
 sub checkTestStorageDevice {
-  my $gotTestDevice = 0;
-  my @testDevices = (
-                     "/dev/vdo_scratch",
-                     "/dev/vdo_scratchdev_*",
-                     "/dev/md0",
-                     "/dev/xvda2",
-                     "/dev/sda8"
-                    );
-
-  if (_isPMIFarm()) {
-    my @pmiScratchDevices = glob("/dev/vdo_scratchdev_vd*");
-    if (!@pmiScratchDevices) {
-      error("unable to locate test storage device");
-      return;
-    }
-    push(@testDevices, @pmiScratchDevices);
-  }
-  my $megaraid = getScamVar("MEGARAID");
-  if ($megaraid) {
-    chomp($megaraid);
-    unshift(@testDevices, "$megaraid-part1");
-  }
-  foreach my $device (@testDevices) {
-    if (-b $device) {
-      return;
-    }
-  }
-  # no fix available
-  error("unable to locate test storage device");
+  getTestBlockDeviceNames();
 }
+
+#############################################################################
+# Get the name of the scratch block devices for a test to use.
+#
+# @return array ref of test device names (full path)
+##
+sub getTestBlockDeviceNames {
+  # Just ask the host which of a standard list of devices exists on the system.
+  # Use the first group of devices in the list that we actually find.  Optimize
+  # this query by sending just a single command to the remote host.
+  #
+  # The list of devices is:
+  #   1 - partition #1 on a Megaraid controller (VDO-PMI parkst)
+  #   2 - /dev/vdo_scratch (afarms & lfarms)
+  #   3 - /dev/vdo_scratchdev_* (raid setup)
+  #   4 - /dev/md0 (ALBIREO-PMI parkst)
+  #   5 - /dev/xvda2 (afarms & lfarms)
+  #   6 - /dev/sda8 (vfarms)
+  #
+  # N.B.: Make sure this stays in sync with the code in
+  # Permabit::LabUtils::getTestBlockDeviceNames!
+  #
+  my $code = <<'EOF';
+for D in "`/sbin/scam MEGARAID`-part1" "/dev/vdo_scratch" "/dev/vdo_scratchdev_*" "/dev/md0" "/dev/xvda2" "/dev/sda8";
+do
+  F=0;
+  for E in $D;
+  do
+    if test -b $E;
+    then
+      echo $E;
+      F=1;
+    fi;
+  done;
+  if test $F -eq 1;
+  then
+    break;
+  fi;
+done;
+EOF
+
+  open(my $fh, "$code 2>/dev/null|")
+    || _die("unable to locate test storage device: $ERRNO");
+  my @devices = <$fh>;
+  close($fh) || _die("unable to locate test storage device: $CHILD_ERROR");
+  chomp(@devices);
+  if (scalar(@devices) == 0) {
+    error("Unable to locate test storage device");
+  }
+  return @devices;
+}
+

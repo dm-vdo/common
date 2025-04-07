@@ -1,7 +1,7 @@
 %define         base_name Permabit-Core
 Name:           perl-%{base_name}
 Version:        1.03
-Release:        52%{?dist}
+Release:        53%{?dist}
 Summary:        Permabit Core Perl libs
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -240,7 +240,6 @@ to run anything in the environments required by VDO.
 %{perl_vendorlib}/Permabit/testcases/ReserveHostGroup.pm
 %{perl_vendorlib}/Permabit/testcases/SSHMuxIPCSession_t1.pm
 %{perl_vendorlib}/Permabit/testcases/Sort_t1.pm
-%{perl_vendorlib}/Permabit/testcases/SupportUtils_t1.pm
 %{perl_vendorlib}/Permabit/testcases/SystemUtils_t1.pm
 %{perl_vendorlib}/Permabit/testcases/SystemUtils_t1.yaml
 %{perl_vendorlib}/Permabit/testcases/Tempfile_t1.pm
@@ -389,7 +388,6 @@ This package contains the Permabit Perl Utils module.
 %{perl_vendorlib}/Permabit/LabUtils/Makefile
 %{perl_vendorlib}/Permabit/PlatformUtils.pm
 %{perl_vendorlib}/Permabit/ProcessUtils.pm
-%{perl_vendorlib}/Permabit/SupportUtils.pm
 %{perl_vendorlib}/Permabit/SystemUtils.pm
 %{perl_vendorlib}/Permabit/SystemUtils/Implementation.pm
 %{perl_vendorlib}/Permabit/Utils.pm
@@ -432,6 +430,11 @@ find %{buildroot} -type f -name .packlist -delete
 %{__install} -m 644 -D lib/Permabit/ConfiguredFactory.yaml $RPM_BUILD_ROOT/%{_sysconfdir}/permabit/perl.yaml
 
 %changelog
+* Fri Apr 04 2025 Matthew Sakai <msakai@redhat.com> - 1.03-53
+- Replace Fatal with the more modern autodie.
+- Remove all dependencies on Sys::CpuLoad.
+- Remove unused SupportUtils.
+
 * Wed Mar 05 2025 Chung Chung <cchung@redhat.com> - 1.03-52
 - Remove unused Jira and TriageUtils_t1 references
 

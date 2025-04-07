@@ -207,7 +207,6 @@ use Log::Log4perl::Level;
 use Log::Log4perl;
 use POSIX qw(strftime :signal_h);
 use Storable qw(dclone);
-use Sys::CpuLoad;
 use Sys::Hostname;
 use Test::Unit::TestRunner;
 
@@ -219,6 +218,7 @@ use Permabit::FileCopier;
 use Permabit::Options qw(parseARGV parseOptionsString);
 use Permabit::Testcase;
 use Permabit::RSVP;
+use Permabit::SystemUtils qw(runSystemCommand);
 use Permabit::Utils qw(
   findAllTests
   getSignalNumber
@@ -785,8 +785,8 @@ sub _startMoreThreads {
   sleep(1);
 
   if ($scale) {
-    my $load = Sys::CpuLoad::load();
-    if ($load > $MAX_LOAD) {
+    my $load = runSystemCommand("cat /proc/loadavg | awk '{print \$1}'");
+    if ($load->{stdout} > $MAX_LOAD) {
       $log->info("load $load is higher than $MAX_LOAD: throttling");
       return 0;
     }

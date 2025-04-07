@@ -6,13 +6,8 @@ PWD:= $(shell pwd)
 LIB:= ${PWD}/../lib
 
 SUBDIRS:=					\
-          Config-Properties-0.41		\
-          IPC-Session-0.05			\
-          Log-Dispatch-FileRotate-1.11		\
           Proc-Simple-1.32			\
-          Shuffle-1.4				\
           Test-Unit-0.25			\
-          interface-0.02                        \
 
 all: ${SUBDIRS}
 

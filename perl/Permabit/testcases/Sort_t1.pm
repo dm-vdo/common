@@ -9,9 +9,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Carp qw(croak);
 use English qw(-no_match_vars);
-#use Fatal qw(chmod link mkdir symlink unlink);
 use File::Temp qw(tmpnam);
-#use Permabit::DirDiff;
 use Permabit::SystemUtils qw(assertSystem);
 use base qw(Permabit::Testcase);
 

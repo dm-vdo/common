@@ -1,7 +1,7 @@
 %define         base_name Permabit-Core
 Name:           perl-%{base_name}
 Version:        1.03
-Release:        53%{?dist}
+Release:        54%{?dist}
 Summary:        Permabit Core Perl libs
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -307,7 +307,7 @@ Summary:        Permabit RSVP Perl Module
 %if 0%{?rhel} && 0%{?rhel} >= 9
 Requires:       python3-pbit-lsb-release
 %else
-Requires:       redhat-lsb-core
+Requires:       redhat-lsb
 %endif
 
 %description -n perl-Permabit-RSVP
@@ -430,6 +430,9 @@ find %{buildroot} -type f -name .packlist -delete
 %{__install} -m 644 -D lib/Permabit/ConfiguredFactory.yaml $RPM_BUILD_ROOT/%{_sysconfdir}/permabit/perl.yaml
 
 %changelog
+* Fri Apr 25 2025 Chung Chung <cchung@redhat.com> - 1.03-54
+- Fedora 42 only provide redhat-lsb.
+
 * Fri Apr 04 2025 Matthew Sakai <msakai@redhat.com> - 1.03-53
 - Replace Fatal with the more modern autodie.
 - Remove all dependencies on Sys::CpuLoad.

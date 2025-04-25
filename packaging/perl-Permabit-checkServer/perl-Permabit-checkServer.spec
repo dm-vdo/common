@@ -1,7 +1,7 @@
 %define         base_name Permabit-checkServer
 Name:           perl-%{base_name}
 Version:        1.0
-Release:        35%{?dist}
+Release:        36%{?dist}
 Summary:        Permabit checkServer utility
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -43,7 +43,7 @@ Requires:       perl-Permabit-Triage >= 1.02-21
 %if 0%{?rhel} && 0%{?rhel} >= 9
 Requires:       python3-pbit-lsb-release
 %else
-Requires:       redhat-lsb-core
+Requires:       redhat-lsb
 %endif
 Requires:       scam
 
@@ -98,6 +98,9 @@ find %{buildroot} -type f -name .packlist -delete
 %{_fixperms} -c %{buildroot}
 
 %changelog
+* Fri Apr 25 2025 Chung Chung <cchung@redhat.com> - 1.0-36
+- Fedora 42 only provide redhat-lsb.
+
 * Wed Mar 05 2025 Chung Chung <cchung@redhat.com> - 1.0-35
 - Add support for RHEL10
 

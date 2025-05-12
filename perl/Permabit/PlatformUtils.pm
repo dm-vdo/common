@@ -51,6 +51,7 @@ our @EXPORT_OK = qw(
   getDistroInfo
   getPkgBundle
   getReleaseInfo
+  isAdams
   isAlbireo
   isCentOS
   isCentOS8
@@ -334,7 +335,8 @@ sub getDistroInfo {
         || ($major == 30) || ($major == 31) || ($major == 32)
         || ($major == 33) || ($major == 34) || ($major == 35)
 	|| ($major == 36) || ($major == 37) || ($major == 38)
-	|| ($major == 39) || ($major == 40) || ($major == 41)) {
+	|| ($major == 39) || ($major == 40) || ($major == 41)
+	|| ($major == 42)) {
       return "FEDORA$major";
     }
   } elsif (isSles($host)) {
@@ -584,7 +586,8 @@ BEGIN {
     redHat => [qw(Santiago Maipo Ootpa Plow Coughlan)],
     fedora => [qw(TwentySeven TwentyEight TwentyNine Thirty ThirtyOne
 	          ThirtyTwo ThirtyThree ThirtyFour ThirtyFive ThirtySix 
-	          ThirtySeven ThirtyEight ThirtyNine Forty FortyOne Rawhide)],
+	          ThirtySeven ThirtyEight ThirtyNine Forty FortyOne Adams
+		  Rawhide)],
     sles   => [],
     centOS => [qw(8)],
    };

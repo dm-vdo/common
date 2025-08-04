@@ -1,4 +1,4 @@
-name: Common CI
+name: CI
 
 on:
   pull_request_target:
@@ -12,13 +12,28 @@ concurrency:
 
 jobs:
   Run-Common-CI:
-    uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yml@main
+    uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yaml@main
     with:
-      # Turn this off temporarily
-      run-public-tests: false
-      public-tests-action: echo 'You need to specify commands to run here'
-      public-tests-failure-action: echo "You need to specify cleanup commands to run, i.e collecting logs"
+      run-public-tests: true
+      public-tests-action: make jenkins
+      public-tests-action-failure: |
+        cd logs
+        for i in *;
+        do
+          if [ -d "$i" ]; then
+            cd $i
+            for file in *::*.log;
+            do
+              [ -e "$file" ] || continue
+              mv "${file}" "${file/::/--}"
+            done
+            cd ..
+          else
+            mv "${i}" "${i/::/--}"
+          fi
+        done
       # Call the Jenkins job
       run-private-tests: true
-      private-tests-action: |
-        /permabit/ops/scripts/runJenkinsJob common-github
+      private-tests-action: /permabit/ops/scripts/runJenkinsJob common-github
+      private-tests-action-failure: echo "Private testing failed"
+    secrets: inherit

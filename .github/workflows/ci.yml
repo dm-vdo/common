@@ -14,26 +14,26 @@ jobs:
   Run-Common-CI:
     uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yaml@main
     with:
-      run-public-tests: true
+      run-public: true
+      public-build-action: make all
+      public-build-action-failure: echo "build failed. see logs"
       public-tests-action: make jenkins
       public-tests-action-failure: |
         cd logs
-        for i in *;
-        do
-          if [ -d "$i" ]; then
-            cd $i
-            for file in *::*.log;
-            do
-              [ -e "$file" ] || continue
-              mv "${file}" "${file/::/--}"
+        for item in *; do
+          [[ -e "$item" ]] || continue
+          if [[ -d "$item" ]]; then
+            for file in "$item"/*::*; do
+              [[ -e "$file" ]] && mv "$file" "${file/::/--}"
             done
-            cd ..
-          else
-            mv "${i}" "${i/::/--}"
+          elif [[ "$item" == *::* ]]; then
+            mv "$item" "${item/::/--}"
           fi
-        done
-      # Call the Jenkins job
-      run-private-tests: true
-      private-tests-action: /permabit/ops/scripts/runJenkinsJob common-github
-      private-tests-action-failure: echo "Private testing failed"
+        done      
+      run-private: true
+      private-build-action: make all
+      private build-action-failed: echo "build failed. see logs"
+      private-tests-action: make jenkins
+      private-tests-action-failure: |
+        cp -a logs /permabit/user/bunsen/artifacts/${{ env.LOGFILE }}      
     secrets: inherit

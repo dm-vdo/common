@@ -35,7 +35,7 @@ jobs:
         done      
       run-private: true
       private-build-action: make all
-      private build-action-failed: echo "build failed. see logs"
+      private-build-action-failed: echo "build failed. see logs"
       private-tests-action: make jenkins
       private-tests-action-failure: |
         cp -a logs /permabit/user/bunsen/artifacts/${{ env.LOGFILE }}      

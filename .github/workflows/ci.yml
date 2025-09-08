@@ -5,14 +5,10 @@ on:
     types: [ opened, reopened, ready_for_review, synchronize ]
   workflow_dispatch:
 
-# This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 
-env:
-  LOGFILE: logs-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-  
 jobs:
   Run-Common-CI:
     uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yaml@main
@@ -36,7 +32,7 @@ jobs:
         done      
       run-private: true
       private-build-action: make all
-      private-build-action-failed: echo "build failed. see logs"
+      private-build-action-failure: echo "build failed. see logs"  # <-- Ensure this matches reusable workflow input name
       private-tests-action: make jenkins
       private-tests-action-failure: |
         cp -a logs /permabit/user/bunsen/artifacts/${{ inputs.logfile }}    

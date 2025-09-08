@@ -17,6 +17,7 @@ jobs:
   Run-Common-CI:
     uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yaml@main
     with:
+      logfile: logs-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
       run-public: true
       public-build-action: make all
       public-build-action-failure: echo "build failed. see logs"
@@ -38,5 +39,5 @@ jobs:
       private-build-action-failed: echo "build failed. see logs"
       private-tests-action: make jenkins
       private-tests-action-failure: |
-        cp -a logs /permabit/user/bunsen/artifacts/${{ env.LOGFILE }}      
+        cp -a logs /permabit/user/bunsen/artifacts/${{ inputs.logfile }}    
     secrets: inherit

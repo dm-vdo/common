@@ -1,0 +1,17 @@
+name: Deployment
+
+on:
+  pull_request:
+    types:
+      [ closed ]     
+jobs:
+  Run-Common-Deployment:
+    if: github.event.pull_request.merged == true  
+    runs-on: [self-hosted, trusted]  
+    steps:
+      - name: Run-Jenkins
+        uses: dm-vdo/vdo-org-actions/.github/workflows/deploy.yaml@main
+        with:
+          deploy-action: |
+            /permabit/ops/scripts/runJenkinsJob common-github
+          deploy-action-failure: echo "deploy failed. see logs"

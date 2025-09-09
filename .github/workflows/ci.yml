@@ -14,25 +14,10 @@ jobs:
     uses: dm-vdo/vdo-org-actions/.github/workflows/ci.yaml@main
     with:
       logfile: logs-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-      run-public: true
-      public-build-action: make all
-      public-build-action-failure: echo "build failed. see logs"
-      public-tests-action: make jenkins
-      public-tests-action-failure: |
-        cd logs
-        for item in *; do
-          [[ -e "$item" ]] || continue
-          if [[ -d "$item" ]]; then
-            for file in "$item"/*::*; do
-              [[ -e "$file" ]] && mv "$file" "${file/::/--}"
-            done
-          elif [[ "$item" == *::* ]]; then
-            mv "$item" "${item/::/--}"
-          fi
-        done      
-      run-private: true
+      run-public-build: false
+      run-public-test: false
+      run-private-build: true
       private-build-action: make all
-      private-build-action-failure: echo "build failed. see logs"  
+      run-private-test: true
       private-tests-action: make jenkins
-      private-tests-action-failure: echo "internal build failed"
     secrets: inherit

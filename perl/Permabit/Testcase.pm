@@ -114,6 +114,9 @@ use base qw(
 # This is referenced directly from Permabit::TestRunner.
 our $inTeardown = 0;
 
+# Disable "used only once: possible typo" error in RHEL8
+no warnings 'once';
+
 my $GET_CONSOLE_LOG_CMD
   = '/permabit/build/tools/lastrun/getPSIConsoleLog.py';
 

@@ -1,7 +1,7 @@
 %define         base_name Permabit-checkServer
 Name:           perl-%{base_name}
 Version:        1.0
-Release:        37%{?dist}
+Release:        38%{?dist}
 Summary:        Permabit checkServer utility
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -98,6 +98,9 @@ find %{buildroot} -type f -name .packlist -delete
 %{_fixperms} -c %{buildroot}
 
 %changelog
+* Fri Oct 31 2025 Chung Chung <cchung@redhat.com> - 1.0-38
+- Add Fedora 43 support
+
 * Sat May 10 2025 Chung Chung <cchung@redhat.com> - 1.0-37
 - Add Fedora 42 support
 

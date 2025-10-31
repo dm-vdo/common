@@ -84,6 +84,9 @@ our @DIST_CLASSES = qw(CENTOS8
                        FEDORA40
                        FEDORA41
                        FEDORA42
+                       FEDORA42DEBUG
+                       FEDORA43
+                       FEDORA42DEBUG
                        FEDORANEXT
                        RAWHIDE
                        RHEL6

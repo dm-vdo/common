@@ -1,5 +1,5 @@
 Name:           perl-Sys-CpuLoad
-Version:        0.31
+Version:        0.32
 Release:        1%{?dist}
 Summary:        retrieve system load averages
 License:        GPL+ or Artistic
@@ -78,5 +78,8 @@ make test
 /usr/share/man/man3/Sys::CpuLoad.3pm.gz
 
 %changelog
+* Wed Nov 05 2025 Chung Chung <cchung@redhat.com> - 0.32-1
+- Upgrade version to 0.32
+
 * Sun Dec 05 2021 Andy Walsh <awalsh@redhat.com> - 0.31-1
 - Initial build

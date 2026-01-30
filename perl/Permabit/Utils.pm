@@ -31,10 +31,12 @@ use autodie qw(close opendir);
 use Carp qw(carp cluck confess croak);
 use Config;
 use English qw(-no_match_vars);
+use Fcntl qw(O_NOCTTY O_WRONLY);
 use File::Basename;
 use File::Spec;
+use Log::Log4perl;
 use Mail::Mailer;
-use POSIX qw(ceil strftime);
+use POSIX qw(ceil strftime ttyname);
 use Regexp::Common qw(net);
 use Socket;
 use Storable qw(dclone);
@@ -132,6 +134,8 @@ sub _getImplementation {
 
   return $IMPLEMENTATION;
 }
+
+my $log = Log::Log4perl->get_logger(__PACKAGE__);
 
 ######################################################################
 # Add key-value pairs to a hashref
@@ -1281,28 +1285,81 @@ sub findAllTests {
 }
 
 ######################################################################
-# Prompt the user on STDERR and wait until return is pressed.
+# Prompt the user and wait for a newline, even when STDERR is redirected.
+#
+# This routine tries to display the prompt on a real terminal whenever
+# possible: it uses STDERR if it's a TTY, otherwise it attempts /dev/tty,
+# then the terminal associated with STDIN as a fallback; if no terminal
+# is available it still emits the prompt text to logs so it remains visible.
+# Output is flushed so the prompt appears immediately.
+#
+# Input is always read from STDIN so it works both interactively and when
+# STDIN is piped; EOF on STDIN results in undef. The function returns the
+# line that was read.
 #
 # @oparam messages        A list of zero or more prompt messages.
 #
-# @return The input line
+# @return The input line (undef on EOF)
 ##
 sub waitForInput {
   my (@messages) = @_;
   if (!@messages) {
     @messages = ("Please perform any manual operations then press return:");
   }
-  my $input = *STDIN;
+
+  my $prompt = join("\n", @messages);
+
   my $output = *STDERR;
-  my $tty;
-  if (! -t STDERR and open($tty,"+</dev/tty") and -t $tty) {
-    $input = *$tty;
-    $output = *$tty;
+  my $tty_out;
+  my $tty_out_open = 0;
+
+  # If STDERR isn't a TTY, try to find a terminal for output.
+  if (! -t STDERR) {
+    # First, try the controlling terminal (usually unavailable after setsid()).
+    if (open($tty_out, '>', '/dev/tty')) {
+      $output = $tty_out;
+      $tty_out_open = 1;
+    } else {
+      $log->info("waitForInput: could not open /dev/tty for output: $!");
+      if (-t STDIN) {
+        # Fall back to the device backing STDIN without acquiring a controlling
+        # tty.
+        my $stdin_path = eval { ttyname(fileno(STDIN)) };
+        if ($stdin_path &&
+            sysopen($tty_out, $stdin_path, O_WRONLY | O_NOCTTY)) {
+          $output = $tty_out;
+          $tty_out_open = 1;
+        }
+        # Failing all that, we could still be invoked in an environment where
+        # someone or something controls our input in real time while monitoring
+        # our output.
+      } else {
+        $log->debug("waitForInput: STDIN is not a TTY; skipping ttyname() fallback");
+      }
+    }
+    # If we still don't have a terminal handle, log the prompt so it's visible.
+    if (!$tty_out_open) {
+      $log->warn($prompt);
+    }
   }
-  print $output "\n", join("\n", @messages);
-  my $line = <$input>;
-  if (defined($tty)) {
-    close $tty;
+
+  # prompt is set above; warning is handled within the STDERR-not-a-TTY block
+  {
+    # Use select/local $| to enable autoflush on the chosen output handle
+    # without permanently altering STDOUT's autoflush setting or requiring
+    # IO::Handle; this ensures the prompt is displayed immediately.
+    my $old = select($output);
+    local $| = 1;
+    select($old);
+  };
+  print $output "\n", $prompt;
+
+  # If STDIN is not a TTY, still treat it as an input source (e.g., a pipe).
+  # We'll read from STDIN and continue immediately if we see EOF.
+  my $line = <STDIN>;
+
+  if ($tty_out_open) {
+    CORE::close($tty_out);
   }
   return $line;
 }

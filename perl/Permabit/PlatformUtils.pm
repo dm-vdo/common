@@ -99,6 +99,7 @@ our @EXPORT_OK = qw(
   isForty
   isFortyOne
   isFortyThree
+  isFortyFour
 );
 
 my $log = Log::Log4perl->get_logger(__PACKAGE__);
@@ -337,7 +338,7 @@ sub getDistroInfo {
         || ($major == 33) || ($major == 34) || ($major == 35)
 	|| ($major == 36) || ($major == 37) || ($major == 38)
 	|| ($major == 39) || ($major == 40) || ($major == 41)
-	|| ($major == 42) || ($major == 43)) {
+	|| ($major == 42) || ($major == 43) || ($major == 44)) {
       return "FEDORA$major";
     }
   } elsif (isSles($host)) {
@@ -588,7 +589,7 @@ BEGIN {
     fedora => [qw(TwentySeven TwentyEight TwentyNine Thirty ThirtyOne
 	          ThirtyTwo ThirtyThree ThirtyFour ThirtyFive ThirtySix 
 	          ThirtySeven ThirtyEight ThirtyNine Forty FortyOne Adams
-		  FortyThree Rawhide)],
+		  FortyThree FortyFour Rawhide)],
     sles   => [],
     centOS => [qw(8)],
    };

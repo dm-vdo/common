@@ -1328,6 +1328,7 @@ sub _getOsClass {
     fedora41  => \&isFortyOne,
     fedora42  => \&isAdams,
     fedora43  => \&isFortyThree,
+    fedora44  => \&isFortyFour,
     rawhide   => \&isRawhide,
   );
   # Fedora linux-next kernel can run on any Fedora OS. Check to see if
@@ -1685,6 +1686,8 @@ sub _isFarm {
   return _hostInList(
                      'jfarm',
                      'pfarm',
+                     'ofarm',
+                     'lofarm',
                     )
           || (getScamVar('FARM') eq 'yes');
 }
@@ -1731,14 +1734,14 @@ sub _isJFarm {
 # Check if this host is a pfarm class machine
 ##
 sub _isPFarm {
-  return _hostInList('pfarm');
+  return _hostInList('pfarm', 'ofarm');
 }
 
 ######################################################################
 # Check if this host is a pfarm class machine
 ##
 sub _isPMIFarm {
-  return _hostInList('pmifarm');
+  return _hostInList('pmifarm', 'lofarm');
 }
 
 ######################################################################

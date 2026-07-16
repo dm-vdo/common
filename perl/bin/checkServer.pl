@@ -1689,6 +1689,7 @@ sub _isFarm {
   return _hostInList(
                      'jfarm',
                      'pfarm',
+                     'ofarm',
                     )
           || (getScamVar('FARM') eq 'yes');
 }
@@ -1742,7 +1743,7 @@ sub _isPFarm {
 # Check if this host is a pfarm class machine
 ##
 sub _isPMIFarm {
-  return _hostInList('pmifarm');
+  return _hostInList('pmifarm', 'lofarm');
 }
 
 ######################################################################

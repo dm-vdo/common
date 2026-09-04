@@ -1,7 +1,7 @@
 %define         base_name Permabit-checkServer
 Name:           perl-%{base_name}
 Version:        1.0
-Release:        39%{?dist}
+Release:        40%{?dist}
 Summary:        Permabit checkServer utility
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -98,6 +98,9 @@ find %{buildroot} -type f -name .packlist -delete
 %{_fixperms} -c %{buildroot}
 
 %changelog
+* Thu Jul 16 2026 Chung Chung <cchung@redhat.com> - 1.0-40
+- Add ofarm and lofarm support
+
 * Wed May 06 2026 Chung Chung <cchung@redhat.com> - 1.0-39
 - Add Fedora 44 support
 

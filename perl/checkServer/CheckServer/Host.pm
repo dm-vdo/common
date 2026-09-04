@@ -122,7 +122,7 @@ sub isJFarm {
 ##
 sub isPFarm {
   my ($self) = assertNumArgs(1, @_);
-  return ($self->{_getCachedName()} //= $self->hostnameMatches(qr/^pfarm-/));
+  return ($self->{_getCachedName()} //= $self->hostnameMatches(qr/^[o|p]farm-/));
 }
 
 ######################################################################

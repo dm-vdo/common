@@ -1736,7 +1736,7 @@ sub _isJFarm {
 # Check if this host is a pfarm class machine
 ##
 sub _isPFarm {
-  return _hostInList('pfarm');
+  return _hostInList('pfarm', 'ofarm');
 }
 
 ######################################################################

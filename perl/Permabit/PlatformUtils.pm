@@ -83,15 +83,6 @@ our @EXPORT_OK = qw(
   isWindows
   isXen
   isXenial
-  isTwentySeven
-  isTwentyEight
-  isTwentyNine
-  isThirty
-  isThirtyOne
-  isThirtyTwo
-  isThirtyThree
-  isThirtyFour
-  isThirtyFive
   isThirtySix
   isThirtySeven
   isThirtyEight
@@ -100,6 +91,7 @@ our @EXPORT_OK = qw(
   isFortyOne
   isFortyThree
   isFortyFour
+  isFortyFive
 );
 
 my $log = Log::Log4perl->get_logger(__PACKAGE__);
@@ -333,12 +325,10 @@ sub getDistroInfo {
       return "RAWHIDE";
     }
     my $major = _getLsbReleaseMajorVersion($lsb);
-    if (($major == 27) || ($major == 28) || ($major == 29)
-        || ($major == 30) || ($major == 31) || ($major == 32)
-        || ($major == 33) || ($major == 34) || ($major == 35)
-	|| ($major == 36) || ($major == 37) || ($major == 38)
+    if (($major == 36) || ($major == 37) || ($major == 38)
 	|| ($major == 39) || ($major == 40) || ($major == 41)
-	|| ($major == 42) || ($major == 43) || ($major == 44)) {
+	|| ($major == 42) || ($major == 43) || ($major == 44)
+        || ($major == 45)) {
       return "FEDORA$major";
     }
   } elsif (isSles($host)) {
@@ -586,10 +576,8 @@ BEGIN {
     ubuntu => [qw(precise raring trusty vivid xenial)],
     debian => [qw(jessie lenny squeeze wheezy)],
     redHat => [qw(Santiago Maipo Ootpa Plow Coughlan)],
-    fedora => [qw(TwentySeven TwentyEight TwentyNine Thirty ThirtyOne
-	          ThirtyTwo ThirtyThree ThirtyFour ThirtyFive ThirtySix 
-	          ThirtySeven ThirtyEight ThirtyNine Forty FortyOne Adams
-		  FortyThree FortyFour Rawhide)],
+    fedora => [qw(ThirtySix ThirtySeven ThirtyEight ThirtyNine Forty FortyOne
+                  Adams FortyThree FortyFour FortyFive Rawhide)],
     sles   => [],
     centOS => [qw(8)],
    };

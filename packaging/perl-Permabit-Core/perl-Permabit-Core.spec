@@ -1,7 +1,7 @@
 %define         base_name Permabit-Core
 Name:           perl-%{base_name}
 Version:        1.03
-Release:        57%{?dist}
+Release:        58%{?dist}
 Summary:        Permabit Core Perl libs
 License:        GPL2+
 URL:            https://github.com/dm-vdo/common
@@ -430,6 +430,9 @@ find %{buildroot} -type f -name .packlist -delete
 %{__install} -m 644 -D lib/Permabit/ConfiguredFactory.yaml $RPM_BUILD_ROOT/%{_sysconfdir}/permabit/perl.yaml
 
 %changelog
+* Mon Nov 30 2026 Matthew Sakai <msakai@redhat.com> - 1.03-58
+- Add Fedora 45 support
+
 * Wed May 06 2026 Chung Chung <cchung@redhat.com> - 1.03-57
 - Add Fedora 44 support
 

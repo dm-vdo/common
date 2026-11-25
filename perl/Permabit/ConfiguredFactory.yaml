@@ -115,15 +115,6 @@ Permabit::RSVP:
         - VDO-PMI
         - VFARM
       os:
-        - FEDORA27
-        - FEDORA28
-        - FEDORA29
-        - FEDORA30
-        - FEDORA31
-        - FEDORA32
-        - FEDORA33
-        - FEDORA34
-        - FEDORA35
         - FEDORA36
         - FEDORA37
         - FEDORA38
@@ -136,6 +127,8 @@ Permabit::RSVP:
         - FEDORA43DEBUG
         - FEDORA44
         - FEDORA44DEBUG
+        - FEDORA45
+        - FEDORA45DEBUG
         - FEDORANEXT
         - RAWHIDE
         - RHEL6

@@ -68,15 +68,6 @@ our @ARCH_CLASSES = qw(AARCH64
 
 # The following are the distribution classes that are supported
 our @DIST_CLASSES = qw(CENTOS8
-                       FEDORA27
-                       FEDORA28
-                       FEDORA29
-                       FEDORA30
-                       FEDORA31
-                       FEDORA32
-                       FEDORA33
-                       FEDORA34
-                       FEDORA35
                        FEDORA36
                        FEDORA37
                        FEDORA38
@@ -89,6 +80,8 @@ our @DIST_CLASSES = qw(CENTOS8
                        FEDORA43DEBUG
                        FEDORA44
                        FEDORA44DEBUG
+                       FEDORA45
+                       FEDORA45DEBUG
                        FEDORANEXT
                        RAWHIDE
                        RHEL6

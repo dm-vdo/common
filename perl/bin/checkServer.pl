@@ -101,15 +101,6 @@ use Permabit::PlatformUtils qw(
   isOotpa
   isPlow
   isRedHat
-  isTwentySeven
-  isTwentyEight
-  isTwentyNine
-  isThirty
-  isThirtyOne
-  isThirtyTwo
-  isThirtyThree
-  isThirtyFour
-  isThirtyFive
   isThirtySix
   isThirtySeven
   isThirtyEight
@@ -118,6 +109,7 @@ use Permabit::PlatformUtils qw(
   isFortyOne
   isFortyThree
   isFortyFour
+  isFortyFive
   isRawhide
 );
 
@@ -233,24 +225,6 @@ if (isAlbireo()) {
     $CURRENT_KERNELS = '6.12.0-.*.el10(|_([0-9])).x86_64(|\+debug)';
   } elsif (isFedoraNext()) {
     $CURRENT_KERNELS = '.*.*next.*fc.*x86_64';
-  } elsif (isTwentySeven()) {
-    $CURRENT_KERNELS = '4.*.fc27.x86_64';
-  } elsif (isTwentyEight()) {
-    $CURRENT_KERNELS = '(4|5).*.fc28.x86_64';
-  } elsif (isTwentyNine()) {
-    $CURRENT_KERNELS = '(4|5).*.fc29.x86_64';
-  } elsif (isThirty()) {
-    $CURRENT_KERNELS = '5.*.fc30.x86_64';
-  } elsif (isThirtyOne()) {
-    $CURRENT_KERNELS = '5.*.fc31.x86_64';
-  } elsif (isThirtyTwo()) {
-    $CURRENT_KERNELS = '5.*.fc32.x86_64';
-  } elsif (isThirtyThree()) {
-    $CURRENT_KERNELS = '5.*.fc33.x86_64';
-  } elsif (isThirtyFour()) {
-    $CURRENT_KERNELS = '5.*.fc34.x86_64';
-  } elsif (isThirtyFive()) {
-    $CURRENT_KERNELS = '(5|6).*.fc35.x86_64';
   } elsif (isThirtySix()) {
     $CURRENT_KERNELS = '(5|6).*.fc36.x86_64';
   } elsif (isThirtySeven()) {
@@ -266,9 +240,11 @@ if (isAlbireo()) {
   } elsif (isAdams()) {
     $CURRENT_KERNELS = '6.*.fc42.x86_64';
   } elsif (isFortyThree()) {
-    $CURRENT_KERNELS = '6.*.fc43.x86_64';
+    $CURRENT_KERNELS = '(6|7).*.fc43.x86_64';
   } elsif (isFortyFour()) {
-    $CURRENT_KERNELS = '6.*.fc44.x86_64';
+    $CURRENT_KERNELS = '(6|7).*.fc44.x86_64';
+  } elsif (isFortyFive()) {
+    $CURRENT_KERNELS = '7.*.fc44.x86_64';
   } elsif (isRawhide()) {
     # Since Fedora Rawhide's kernel changes so frequently
     # we can only check basic formatting.
@@ -1093,10 +1069,9 @@ sub checkDaemons {
     #XXX: ntpd is not available in RHEL8, FEDORA32 and FEDORA33 anymore,
     #     we need to fix this at some point"
     if ((isCentOS8() || isOotpa() || isPlow() || isCoughlan() || isFedoraNext()
-	 || isThirtyTwo() || isThirtyThree() || isThirtyFour()
-	 || isThirtyFive() || isThirtySix() || isThirtySeven()
-	 || isThirtyEight() || isThirtyNine() || isForty() || isFortyOne()
-	 || isAdams() || isFortyThree() || isFortyFour())
+         || isThirtySix() || isThirtySeven() || isThirtyEight()
+         || isThirtyNine() || isForty() || isFortyOne() || isAdams()
+         || isFortyThree() || isFortyFour() || isFortyFive())
         && $daemon eq "ntpd") {
       next;
     }
@@ -1314,15 +1289,6 @@ sub _getOsClass {
     rhel8     => \&isOotpa,
     rhel9     => \&isPlow,
     rhel10    => \&isCoughlan,
-    fedora27  => \&isTwentySeven,
-    fedora28  => \&isTwentyEight,
-    fedora29  => \&isTwentyNine,
-    fedora30  => \&isThirty,
-    fedora31  => \&isThirtyOne,
-    fedora32  => \&isThirtyTwo,
-    fedora33  => \&isThirtyThree,
-    fedora34  => \&isThirtyFour,
-    fedora35  => \&isThirtyFive,
     fedora36  => \&isThirtySix,
     fedora37  => \&isThirtySeven,
     fedora38  => \&isThirtyEight,
@@ -1332,6 +1298,7 @@ sub _getOsClass {
     fedora42  => \&isAdams,
     fedora43  => \&isFortyThree,
     fedora44  => \&isFortyFour,
+    fedora45  => \&isFortyFive,
     rawhide   => \&isRawhide,
   );
   # Fedora linux-next kernel can run on any Fedora OS. Check to see if
